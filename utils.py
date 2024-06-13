@@ -17,17 +17,18 @@ class Utils:
 
     @staticmethod
     def extract_fuel_type(fuel: str) -> tuple[str | None, str] | None:
-        regex = r"(euro|evro)?.*(regular|diesel|dizel|super|premium)"
-        fuel_type_match = re.search(regex, fuel, re.IGNORECASE)
+        euro_regex = r"(euro|evro)"
+        fuel_regex = r"(regular|diesel|dizel|super|premium)"
+
+        euro_match = re.search(euro_regex, fuel, re.IGNORECASE)
+        fuel_match = re.search(fuel_regex, fuel, re.IGNORECASE)
         
-        if not fuel_type_match:
+        if not fuel_match:
             return None
 
-        euro, fuel_type = fuel_type_match.groups()
-
         return (
-            Utils.normalize_euro(euro) if euro else None,
-            Utils.normalize_fuel(fuel_type)
+            Utils.normalize_euro(euro_match.group()) if euro_match else None,
+            Utils.normalize_fuel(fuel_match.group())
         )
 
     @staticmethod
@@ -43,7 +44,3 @@ class Utils:
         replace "dizel" if it exists with "diesel" and convert to lowercase 
         """
         return re.sub("dizel", "diesel", fuel.lower())
-        
-    
-
-print(Utils.sluggify_fuel("evro regulari"))
