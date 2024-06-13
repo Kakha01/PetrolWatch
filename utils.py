@@ -1,60 +1,49 @@
 import re
-from typing import Callable
  
 class Utils:
     @staticmethod
-    def sluggify(s: str) -> str:
-        """
-        Converts a string to a slug representation based on fuel type.
-
-        Args:
-            s (str): The input string to be converted.
+    def sluggify_fuel(fuel: str) -> str | None:
+        fuel_type_match = Utils.extract_fuel_type(fuel)
         
-        Returns:
-            str: The slug representation of the input string based on fuel type.
-        """
+        if not fuel_type_match:
+            return None
+
+        euro, fuel_type = fuel_type_match
+
+        if euro:
+            return f"{euro}_{fuel_type}"
         
-        types = FuelType.get_types()
-    
-        for fuel_check, fuel_type in types.items():
-            if fuel_check(s):
-                return fuel_type
-    
-        return "unknown"
-
-
-class FuelType:
-    @staticmethod
-    def is_euro_regular(s: str) -> bool:
-        return bool(re.search(r"(euro|evro).*(regulari?)", s, re.I))
+        return fuel_type
 
     @staticmethod
-    def is_regular(s: str) -> bool:
-        return bool(re.search(r"(regulari?)", s, re.I))
+    def extract_fuel_type(fuel: str) -> tuple[str | None, str] | None:
+        regex = r"(euro|evro)?.*(regular|diesel|dizel|super|premium)"
+        fuel_type_match = re.search(regex, fuel, re.IGNORECASE)
+        
+        if not fuel_type_match:
+            return None
+
+        euro, fuel_type = fuel_type_match.groups()
+
+        return (
+            Utils.normalize_euro(euro) if euro else None,
+            Utils.normalize_fuel(fuel_type)
+        )
 
     @staticmethod
-    def is_euro_diesel(s: str) -> bool:
-        return bool(re.search(r"(euro|evro).*(dieseli?|dizeli)", s, re.I))
-
-    @staticmethod
-    def is_diesel(s: str) -> bool:
-        return bool(re.search(r"(dieseli?|dizeli)", s, re.I))
-
-    @staticmethod
-    def is_super(s: str) -> bool:
-        return bool(re.search(r"(superi?)", s, re.I))
-
-    @staticmethod
-    def is_premium(s: str) -> bool:
-        return bool(re.search(r"(premiumi?)", s, re.I))
+    def normalize_euro(euro: str) -> str:
+        """
+        replace "evro" if it exists with "euro" and convert to lowercase
+        """
+        return re.sub("evro", "euro", euro.lower())
     
     @staticmethod
-    def get_types() -> dict[Callable[[str], bool], str]:
-        return {
-            FuelType.is_euro_diesel: "euro_diesel",
-            FuelType.is_diesel: "diesel",
-            FuelType.is_euro_regular: "euro_regular",
-            FuelType.is_regular: "regular",
-            FuelType.is_super: "super",
-            FuelType.is_premium: "premium"
-        }
+    def normalize_fuel(fuel: str) -> str:
+        """ 
+        replace "dizel" if it exists with "diesel" and convert to lowercase 
+        """
+        return re.sub("dizel", "diesel", fuel.lower())
+        
+    
+
+print(Utils.sluggify_fuel("evro regulari"))
