@@ -1,7 +1,7 @@
 import re
- 
+
 class Utils:
-    
+
     FUEL_TYPE_REGEX = r"(regular|diesel|dizel|super|premium)"
     FUEL_GRADE_REGEX = r"(euro|evro)"
 
@@ -17,7 +17,7 @@ class Utils:
     @staticmethod
     def sluggify_fuel(fuel: str) -> str | None:
         fuel_type = Utils.extract_fuel_type(fuel)
-        
+
         if not fuel_type:
             return None
 
@@ -25,7 +25,7 @@ class Utils:
 
         if not fuel_grade:
             return fuel_type
-        
+
         return f"{fuel_grade}_{fuel_type}"
 
     @staticmethod
@@ -50,9 +50,8 @@ class Utils:
     def normalize_fuel_grade(fuel_grade: str) -> str:
         fuel_grade_l = fuel_grade.lower()
         return Utils.FUEL_GRADE_MAPPING.get(fuel_grade_l, fuel_grade_l)
-    
+
     @staticmethod
     def normalize_fuel_type(fuel_type: str) -> str:
         fuel_type_l = fuel_type.lower()
         return Utils.FUEL_TYPE_MAPPING.get(fuel_type_l, fuel_type_l)
-     
