@@ -35,7 +35,7 @@ class Utils:
         if not fuel_type_match:
             return None
 
-        return Utils.normalize_fuel_type(fuel_type_match.group()) if fuel_type_match else None
+        return Utils.normalize_fuel_type(fuel_type_match.group())
 
     @staticmethod
     def extract_fuel_grade(input: str) -> str | None:
@@ -55,3 +55,4 @@ class Utils:
     def normalize_fuel_type(fuel_type: str) -> str:
         fuel_type_l = fuel_type.lower()
         return Utils.FUEL_TYPE_MAPPING.get(fuel_type_l, fuel_type_l)
+     
