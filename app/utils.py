@@ -4,10 +4,7 @@ FUEL_TYPE_REGEX = r"(regular|diesel|dizel|super|premium)"
 FUEL_GRADE_REGEX = r"(euro|evro)"
 
 # Mapping Georgian latinized words for fuel types and grades
-FUEL_MAPPING = {
-    "dizel": "diesel",
-    "evro": "euro"
-}
+FUEL_MAPPING = {"dizel": "diesel", "evro": "euro"}
 
 
 def sluggify_fuel(fuel: str) -> str | None:
@@ -25,8 +22,7 @@ def sluggify_fuel(fuel: str) -> str | None:
 
 
 def extract_fuel_type(input: str) -> str | None:
-    fuel_type_match = re.search(
-        FUEL_TYPE_REGEX, input, re.IGNORECASE)
+    fuel_type_match = re.search(FUEL_TYPE_REGEX, input, re.IGNORECASE)
 
     if not fuel_type_match:
         return None
@@ -35,8 +31,7 @@ def extract_fuel_type(input: str) -> str | None:
 
 
 def extract_fuel_grade(input: str) -> str | None:
-    fuel_grade_match = re.search(
-        FUEL_GRADE_REGEX, input, re.IGNORECASE)
+    fuel_grade_match = re.search(FUEL_GRADE_REGEX, input, re.IGNORECASE)
 
     if not fuel_grade_match:
         return None

@@ -18,7 +18,7 @@ def test_sluggify_georgian_euro_regular():
 
 def test_sluggify_3():
     result = utils.sluggify_fuel("Hello World")
-    assert result == None
+    assert result is None
 
 
 def test_sluggify_euro_premium():

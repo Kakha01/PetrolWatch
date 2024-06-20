@@ -6,9 +6,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 def connect_db():
-    if 'db' not in g:
+    if "db" not in g:
         g.db = sqlite3.connect(
-            current_app.config['DATABASE'],
+            current_app.config["DATABASE"],
         )
         g.db.row_factory = sqlite3.Row
 
@@ -16,7 +16,7 @@ def connect_db():
 
 
 def close_db():
-    db = g.pop('db', None)
+    db = g.pop("db", None)
 
     if db is not None:
         db.close()
@@ -25,7 +25,7 @@ def close_db():
 def init_db():
     db = connect_db()
 
-    with open(os.path.join(basedir, 'schema.sql')) as f:
+    with open(os.path.join(basedir, "schema.sql")) as f:
         cur = db.cursor()
 
         cur.execute(f.read())

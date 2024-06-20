@@ -1,8 +1,12 @@
 {
-  "notebook.defaultFormatter": "ms-python.autopep8",
   "python.analysis.typeCheckingMode": "standard",
-  "editor.formatOnSave": true,
-  "files.autoSave": "afterDelay",
-  "editor.defaultFormatter": "ms-python.autopep8",
-  "editor.formatOnPaste": true
+  "[python]": {
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.formatOnType": true,
+    "editor.wordBasedSuggestions": "off",
+    "editor.formatOnSave": true,
+    "files.autoSave": "afterDelay",
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnPaste": true
+  }
 }
