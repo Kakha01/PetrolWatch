@@ -1,0 +1,8 @@
+{
+  "notebook.defaultFormatter": "ms-python.autopep8",
+  "python.analysis.typeCheckingMode": "standard",
+  "editor.formatOnSave": true,
+  "files.autoSave": "afterDelay",
+  "editor.defaultFormatter": "ms-python.autopep8",
+  "editor.formatOnPaste": true
+}
