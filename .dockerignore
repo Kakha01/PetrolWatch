@@ -1,4 +1,5 @@
 .venv
 .gitignore
 .git
-__pycache__
+__pycache__/
+tests/

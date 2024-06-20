@@ -1,8 +1,17 @@
 from flask import Flask, render_template
 from waitress import serve
+import os
+from db import init_db
+from fuel import get_socar_fuels
+
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 
+app.config['DATABASE'] = os.path.join(basedir, 'database.db')
+
+with app.app_context():
+    init_db()
 
 @app.route('/')
 def index():
