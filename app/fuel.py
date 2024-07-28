@@ -1,9 +1,9 @@
+import urllib3
 import requests
 import utils
 from bs4 import BeautifulSoup, NavigableString
-from typing import TypedDict
+from typing import TypedDict, NamedTuple, Callable
 import sqlite3
-import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -12,21 +12,88 @@ HEADERS = {
     "Encoding": "utf-8",
 }
 
-Fuel = TypedDict(
-    "Fuel",
-    {
-        "company_name": str,
-        "name": str,
-        "price": str,
-        "type": str,
-    },
-)
 
-s = requests.Session()
-s.headers.update(HEADERS)
+class Fuel(TypedDict):
+    company_name: str
+    name: str
+    price: str
+    type: str
 
 
-def fetch_html(url: str):
+class FuelSource(NamedTuple):
+    url: str
+    data_type: str
+    extractor: Callable
+
+
+def fuel_sources() -> dict[str, FuelSource]:
+    return {
+        "SOCAR": FuelSource(
+            url="https://www.sgp.ge/en/",
+            data_type="html",
+            extractor=extract_socar_fuel_info,
+        ),
+        "LUKOIL": FuelSource(
+            url="http://lukoil.ge", data_type="html", extractor=extract_lukoil_fuel_info
+        ),
+        "ROMPETROL": FuelSource(
+            url="https://www.rompetrol.ge/en/",
+            data_type="html",
+            extractor=extract_rompetrol_fuel_info,
+        ),
+        "GULF": FuelSource(
+            url="https://gulf.ge/en/",
+            data_type="html",
+            extractor=extract_gulf_fuel_info,
+        ),
+        "PORTAL": FuelSource(
+            url="https://portal.com.ge/english/home",
+            data_type="html",
+            extractor=extract_portal_fuel_info,
+        ),
+        "OPTIMA": FuelSource(
+            url="http://optimapetrol.ge/en",
+            data_type="html",
+            extractor=extract_optima_fuel_info,
+        ),
+        "WISSOL": FuelSource(
+            url="https://wissol.ge/adminarea/api/ajaxapi/get_fuel_prices?lang=eng",
+            data_type="json",
+            extractor=extract_wissol_fuel_info,
+        ),
+        "CONNECT": FuelSource(
+            url="https://connect-database.vercel.app/api/data",
+            data_type="json",
+            extractor=extract_connect_fuel_info,
+        ),
+    }
+
+
+def get_all_fuels(
+    fuel_sources: dict[str, FuelSource], s: requests.Session
+) -> list[Fuel]:
+    all_fuels: list[Fuel] = []
+    for _, source in fuel_sources.items():
+        fuels = get_fuels(source, s)
+        if fuels:
+            all_fuels.extend(fuels)
+    return all_fuels
+
+
+def get_fuels(source: FuelSource, s: requests.Session) -> list[Fuel] | None:
+    if source.data_type == "html":
+        soup = fetch_html(source.url, s)
+        if not soup:
+            return None
+        return source.extractor(soup)
+    elif source.data_type == "json":
+        json_data = fetch_json(source.url, s)
+        if not json_data:
+            return None
+        return source.extractor(json_data)
+
+
+def fetch_html(url: str, s: requests.Session):
     try:
         response = s.get(url, verify=False)
         soup = BeautifulSoup(response.content, "html.parser")
@@ -35,7 +102,7 @@ def fetch_html(url: str):
         print(e)
 
 
-def fetch_json(url: str):
+def fetch_json(url: str, s: requests.Session):
     try:
         response = s.get(url, verify=False)
         return response.json()
@@ -43,9 +110,9 @@ def fetch_json(url: str):
         print(e)
 
 
-def add_fuels_to_db(db: sqlite3.Connection, fuel_info: list[Fuel]):
+def add_fuels_to_db(db: sqlite3.Connection, fuels: list[Fuel]):
     cur = db.cursor()
-    for fuel in fuel_info:
+    for fuel in fuels:
         try:
             cur.execute(
                 "INSERT INTO fuel (company_name, fuel_name, fuel_price, fuel_type) VALUES (?, ?, ?, ?)",
@@ -56,14 +123,6 @@ def add_fuels_to_db(db: sqlite3.Connection, fuel_info: list[Fuel]):
 
     db.commit()
     cur.close()
-
-
-def get_socar_fuels() -> list[Fuel] | None:
-    soup = fetch_html("https://www.sgp.ge/en/")
-    if not soup:
-        return None
-
-    return extract_socar_fuel_info(soup)
 
 
 def extract_socar_fuel_info(soup: BeautifulSoup):
@@ -94,14 +153,6 @@ def extract_socar_fuel_info(soup: BeautifulSoup):
             )
 
     return fuels
-
-
-def get_lukoil_fuels() -> list[Fuel] | None:
-    soup = fetch_html("http://lukoil.ge")
-    if not soup:
-        return None
-
-    return extract_lukoil_fuel_info(soup)
 
 
 def extract_lukoil_fuel_info(soup: BeautifulSoup):
@@ -139,14 +190,6 @@ def extract_lukoil_fuel_info(soup: BeautifulSoup):
             )
 
     return fuels
-
-
-def get_rompetrol_fuels() -> list[Fuel] | None:
-    soup = fetch_html("https://www.rompetrol.ge/en/")
-    if not soup:
-        return None
-
-    return extract_rompetrol_fuel_info(soup)
 
 
 def extract_rompetrol_fuel_info(soup: BeautifulSoup):
@@ -187,13 +230,6 @@ def extract_rompetrol_fuel_info(soup: BeautifulSoup):
     return fuels
 
 
-def get_gulf_fuels() -> list[Fuel] | None:
-    soup = fetch_html("https://gulf.ge/en/")
-    if not soup:
-        return None
-    return extract_gulf_fuel_info(soup)
-
-
 def extract_gulf_fuel_info(soup: BeautifulSoup):
     # Target:
     # <div class="price_entry">
@@ -220,13 +256,6 @@ def extract_gulf_fuel_info(soup: BeautifulSoup):
             )
 
     return fuels
-
-
-def get_optima_fuels() -> list[Fuel] | None:
-    soup = fetch_html("http://optimapetrol.ge/en")
-    if not soup:
-        return None
-    return extract_optima_fuel_info(soup)
 
 
 def extract_optima_fuel_info(soup: BeautifulSoup):
@@ -258,13 +287,6 @@ def extract_optima_fuel_info(soup: BeautifulSoup):
             )
 
     return fuels
-
-
-def get_portal_fuels() -> list[Fuel] | None:
-    soup = fetch_html("https://portal.com.ge/english/home")
-    if not soup:
-        return None
-    return extract_portal_fuel_info(soup)
 
 
 def extract_portal_fuel_info(soup: BeautifulSoup):
@@ -310,15 +332,6 @@ def extract_portal_fuel_info(soup: BeautifulSoup):
     return fuels
 
 
-def get_wissol_fuels() -> list[Fuel] | None:
-    json = fetch_json(
-        "https://wissol.ge/adminarea/api/ajaxapi/get_fuel_prices?lang=eng"
-    )
-    if not json:
-        return None
-    return extract_wissol_fuel_info(json)
-
-
 def extract_wissol_fuel_info(json: list[dict[str, str]]):
     # Target:
     # [
@@ -346,13 +359,6 @@ def extract_wissol_fuel_info(json: list[dict[str, str]]):
             )
 
     return fuels
-
-
-def get_connect_fuels() -> list[Fuel] | None:
-    json = fetch_json("https://connect-database.vercel.app/api/data")
-    if not json:
-        return None
-    return extract_connect_fuel_info(json)
 
 
 def extract_connect_fuel_info(json: list[dict[str, str]]):

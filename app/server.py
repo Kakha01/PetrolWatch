@@ -7,7 +7,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 
-app.config["DATABASE"] = os.path.join(basedir, "database.db")
+app.config["DATABASE"] = os.path.join(basedir, "cache.db")
 
 with app.app_context():
     init_db()
