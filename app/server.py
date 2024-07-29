@@ -1,22 +1,25 @@
+import fuel
+from apscheduler.schedulers.background import BackgroundScheduler
+from cache import cache
 from flask import Flask, render_template
 from waitress import serve
-import os
-from db import init_db
-
-basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 
-app.config["DATABASE"] = os.path.join(basedir, "cache.db")
-
-with app.app_context():
-    init_db()
+# Recaches every 12 hours
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=fuel.cache_fuels, trigger="interval", hours=12)
+scheduler.start()
 
 
 @app.route("/")
 def index():
-    return render_template("index.html", heading_text="Hello World!")
+    return render_template("index.html", fuels=cache)
 
 
 if __name__ == "__main__":
-    serve(app, host="0.0.0.0", port="8080")
+    try:
+        fuel.cache_fuels()
+        serve(app, host="0.0.0.0", port="8080")
+    except (KeyboardInterrupt, SystemExit):
+        scheduler.shutdown()

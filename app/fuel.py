@@ -1,9 +1,9 @@
-import urllib3
 import requests
+import urllib3
 import utils
 from bs4 import BeautifulSoup, NavigableString
-from typing import TypedDict, NamedTuple, Callable
-import sqlite3
+from cache import add_to_cache, clear_cache
+from interfaces import Fuel, FuelSource
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -11,19 +11,6 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
     "Encoding": "utf-8",
 }
-
-
-class Fuel(TypedDict):
-    company_name: str
-    name: str
-    price: str
-    type: str
-
-
-class FuelSource(NamedTuple):
-    url: str
-    data_type: str
-    extractor: Callable
 
 
 def fuel_sources() -> dict[str, FuelSource]:
@@ -69,14 +56,15 @@ def fuel_sources() -> dict[str, FuelSource]:
     }
 
 
-def get_all_fuels(
-    fuel_sources: dict[str, FuelSource], s: requests.Session
-) -> list[Fuel]:
+def get_all_fuels(fuel_sources: dict[str, FuelSource]) -> list[Fuel]:
+    session = requests.Session()
     all_fuels: list[Fuel] = []
+
     for _, source in fuel_sources.items():
-        fuels = get_fuels(source, s)
+        fuels = get_fuels(source, session)
         if fuels:
             all_fuels.extend(fuels)
+
     return all_fuels
 
 
@@ -86,7 +74,7 @@ def get_fuels(source: FuelSource, s: requests.Session) -> list[Fuel] | None:
         if not soup:
             return None
         return source.extractor(soup)
-    elif source.data_type == "json":
+    else:
         json_data = fetch_json(source.url, s)
         if not json_data:
             return None
@@ -110,19 +98,12 @@ def fetch_json(url: str, s: requests.Session):
         print(e)
 
 
-def add_fuels_to_db(db: sqlite3.Connection, fuels: list[Fuel]):
-    cur = db.cursor()
-    for fuel in fuels:
-        try:
-            cur.execute(
-                "INSERT INTO fuel (company_name, fuel_name, fuel_price, fuel_type) VALUES (?, ?, ?, ?)",
-                (fuel["company_name"], fuel["name"], fuel["price"], fuel["type"]),
-            )
-        except sqlite3.IntegrityError:
-            print("Database Integrity Error")
+def cache_fuels():
+    fuels = get_all_fuels(fuel_sources())
 
-    db.commit()
-    cur.close()
+    clear_cache()
+    for fuel in fuels:
+        add_to_cache(fuel)
 
 
 def extract_socar_fuel_info(soup: BeautifulSoup):
@@ -146,9 +127,9 @@ def extract_socar_fuel_info(soup: BeautifulSoup):
             fuels.append(
                 {
                     "company_name": "Socar",
-                    "name": fuel_name,
-                    "price": fuel_price,
-                    "type": fuel_type,
+                    "fuel_name": fuel_name,
+                    "fuel_price": fuel_price,
+                    "fuel_type": fuel_type,
                 }
             )
 
@@ -183,9 +164,9 @@ def extract_lukoil_fuel_info(soup: BeautifulSoup):
             fuels.append(
                 {
                     "company_name": "Lukoil",
-                    "name": fuel_name,
-                    "price": fuel_price,
-                    "type": fuel_type,
+                    "fuel_name": fuel_name,
+                    "fuel_price": fuel_price,
+                    "fuel_type": fuel_type,
                 }
             )
 
@@ -221,9 +202,9 @@ def extract_rompetrol_fuel_info(soup: BeautifulSoup):
                 fuels.append(
                     {
                         "company_name": "Rompetrol",
-                        "name": fuel_name,
-                        "price": fuel_price,
-                        "type": fuel_type,
+                        "fuel_name": fuel_name,
+                        "fuel_price": fuel_price,
+                        "fuel_type": fuel_type,
                     }
                 )
 
@@ -249,9 +230,9 @@ def extract_gulf_fuel_info(soup: BeautifulSoup):
             fuels.append(
                 {
                     "company_name": "Gulf",
-                    "name": fuel_name,
-                    "price": fuel_price,
-                    "type": fuel_type,
+                    "fuel_name": fuel_name,
+                    "fuel_price": fuel_price,
+                    "fuel_type": fuel_type,
                 }
             )
 
@@ -280,9 +261,9 @@ def extract_optima_fuel_info(soup: BeautifulSoup):
             fuels.append(
                 {
                     "company_name": "Optima",
-                    "name": fuel_name,
-                    "price": fuel_price,
-                    "type": fuel_type,
+                    "fuel_name": fuel_name,
+                    "fuel_price": fuel_price,
+                    "fuel_type": fuel_type,
                 }
             )
 
@@ -323,9 +304,9 @@ def extract_portal_fuel_info(soup: BeautifulSoup):
             fuels.append(
                 {
                     "company_name": "Portal",
-                    "name": fuel_name,
-                    "price": fuel_price,
-                    "type": fuel_type,
+                    "fuel_name": utils.capitalize_words(fuel_name),
+                    "fuel_price": fuel_price,
+                    "fuel_type": fuel_type,
                 }
             )
 
@@ -352,9 +333,9 @@ def extract_wissol_fuel_info(json: list[dict[str, str]]):
             fuels.append(
                 {
                     "company_name": "Wissol",
-                    "name": fuel_name,
-                    "price": fuel_price,
-                    "type": fuel_type,
+                    "fuel_name": utils.capitalize_words(fuel_name),
+                    "fuel_price": fuel_price,
+                    "fuel_type": fuel_type,
                 }
             )
 
@@ -385,9 +366,9 @@ def extract_connect_fuel_info(json: list[dict[str, str]]):
             fuels.append(
                 {
                     "company_name": "Connect",
-                    "name": fuel_name,
-                    "price": fuel_price,
-                    "type": fuel_type,
+                    "fuel_name": fuel_name,
+                    "fuel_price": fuel_price,
+                    "fuel_type": fuel_type,
                 }
             )
 

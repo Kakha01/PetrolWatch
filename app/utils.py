@@ -47,3 +47,7 @@ def normalize_fuel_grade(fuel_grade: str) -> str:
 def normalize_fuel_type(fuel_type: str) -> str:
     fuel_type_l = fuel_type.lower()
     return FUEL_MAPPING.get(fuel_type_l, fuel_type_l)
+
+
+def capitalize_words(input: str) -> str:
+    return " ".join([word.capitalize() for word in input.split()])
