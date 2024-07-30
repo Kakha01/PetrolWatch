@@ -13,7 +13,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
 
-# Recaches every 12 hours
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=fuel.cache_fuels, trigger="interval", hours=1)
 scheduler.start()
