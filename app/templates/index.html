@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
+      href="{{ url_for('static', filename='dist/css/output.css') }}"
     />
     <link
       rel="shortcut icon"
-      href="{{ url_for('static', filename='favicon.ico') }}"
+      href="{{ url_for('static', filename='src/favicon.ico') }}"
     />
-    <script src="{{ url_for('static', filename='index.js') }}" async></script>
+    <script
+      src="{{ url_for('static', filename='src/index.js') }}"
+      async
+    ></script>
     <title>Petrol Control</title>
   </head>
   <body>
