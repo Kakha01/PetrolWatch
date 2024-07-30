@@ -1,5 +1,9 @@
 {
-	"devDependencies": {
-		"tailwindcss": "^3.4.7"
-	}
+  "scripts": {
+    "buildcss": "tailwindcss -o ./app/static/dist/css/output.css --minify",
+    "devcss": "tailwindcss -i ./app/static/src/globals.css -o ./app/static/dist/css/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.7"
+  }
 }
