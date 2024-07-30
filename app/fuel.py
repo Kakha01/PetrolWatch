@@ -1,11 +1,10 @@
+import logging
+
 import requests
-import urllib3
 import utils
 from bs4 import BeautifulSoup, NavigableString
-from cache import add_to_cache, clear_cache
+from cache import clear_fuel_cache, extend_cache, categorize_fuels
 from interfaces import Fuel, FuelSource
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
@@ -13,54 +12,54 @@ HEADERS = {
 }
 
 
-def fuel_sources() -> dict[str, FuelSource]:
-    return {
-        "SOCAR": FuelSource(
-            url="https://www.sgp.ge/en/",
-            data_type="html",
-            extractor=extract_socar_fuel_info,
-        ),
-        "LUKOIL": FuelSource(
-            url="http://lukoil.ge", data_type="html", extractor=extract_lukoil_fuel_info
-        ),
-        "ROMPETROL": FuelSource(
-            url="https://www.rompetrol.ge/en/",
-            data_type="html",
-            extractor=extract_rompetrol_fuel_info,
-        ),
-        "GULF": FuelSource(
+def fuel_sources() -> list[FuelSource]:
+    return [
+        FuelSource(
             url="https://gulf.ge/en/",
             data_type="html",
             extractor=extract_gulf_fuel_info,
         ),
-        "PORTAL": FuelSource(
-            url="https://portal.com.ge/english/home",
+        FuelSource(
+            url="https://www.sgp.ge/en/",
             data_type="html",
-            extractor=extract_portal_fuel_info,
+            extractor=extract_socar_fuel_info,
         ),
-        "OPTIMA": FuelSource(
-            url="http://optimapetrol.ge/en",
-            data_type="html",
-            extractor=extract_optima_fuel_info,
-        ),
-        "WISSOL": FuelSource(
+        FuelSource(
             url="https://wissol.ge/adminarea/api/ajaxapi/get_fuel_prices?lang=eng",
             data_type="json",
             extractor=extract_wissol_fuel_info,
         ),
-        "CONNECT": FuelSource(
+        FuelSource(
+            url="https://www.rompetrol.ge/en/",
+            data_type="html",
+            extractor=extract_rompetrol_fuel_info,
+        ),
+        FuelSource(
+            url="http://lukoil.ge", data_type="html", extractor=extract_lukoil_fuel_info
+        ),
+        FuelSource(
+            url="https://portal.com.ge/english/home",
+            data_type="html",
+            extractor=extract_portal_fuel_info,
+        ),
+        FuelSource(
+            url="http://optimapetrol.ge/en",
+            data_type="html",
+            extractor=extract_optima_fuel_info,
+        ),
+        FuelSource(
             url="https://connect-database.vercel.app/api/data",
             data_type="json",
             extractor=extract_connect_fuel_info,
         ),
-    }
+    ]
 
 
-def get_all_fuels(fuel_sources: dict[str, FuelSource]) -> list[Fuel]:
+def get_all_fuels(fuel_sources: list[FuelSource]) -> list[Fuel]:
     session = requests.Session()
     all_fuels: list[Fuel] = []
 
-    for _, source in fuel_sources.items():
+    for source in fuel_sources:
         fuels = get_fuels(source, session)
         if fuels:
             all_fuels.extend(fuels)
@@ -99,11 +98,14 @@ def fetch_json(url: str, s: requests.Session):
 
 
 def cache_fuels():
+    logging.info("Getting all fuels")
     fuels = get_all_fuels(fuel_sources())
 
-    clear_cache()
-    for fuel in fuels:
-        add_to_cache(fuel)
+    clear_fuel_cache()
+    logging.info("Cleared Cache")
+    extend_cache(fuels)
+    logging.info("Categorised Fuels")
+    categorize_fuels(fuels)
 
 
 def extract_socar_fuel_info(soup: BeautifulSoup):
@@ -160,7 +162,7 @@ def extract_lukoil_fuel_info(soup: BeautifulSoup):
         fuel_price = fuel[0].text.strip()
         fuel_type = utils.sluggify_fuel(fuel_name)
 
-        if fuel_type:
+        if fuel_type and int(float(fuel_price)) > 0:
             fuels.append(
                 {
                     "company_name": "Lukoil",

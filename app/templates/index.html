@@ -18,6 +18,25 @@
     <title>Petrol Control</title>
   </head>
   <body>
-    <div>{{ fuels }}</div>
+    <h1 class="max-w-screen-xl mx-auto font-semibold text-2xl text-center py-4">
+      PetrolWatch
+    </h1>
+    <section
+      class="grid sm:grid-cols-2 grid-cols-1 md:grid-cols-3 lg:grid-cols-4 p-2 gap-2 max-w-screen-xl mx-auto"
+    >
+      {% for company_name, fuels in fuels.items() %}
+      <div class="border rounded-md py-2 px-3">
+        <h2 class="font-semibold text-xl">{{ company_name }}</h2>
+        <div class="my-2">
+          {% for fuel in fuels %}
+          <div class="flex justify-between">
+            <h3>{{ fuel.fuel_name }}</h3>
+            <p>{{ fuel.fuel_price }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
   </body>
 </html>
