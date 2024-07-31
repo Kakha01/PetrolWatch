@@ -1,1 +1,1 @@
-web: sh -c 'cd ./app/ && gunicorn --bind 0.0.0.0:8000 wsgi:app'
+web: sh -c 'cd ./app/ && gunicorn wsgi:app'
