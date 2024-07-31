@@ -6,6 +6,7 @@ charset-normalizer==3.3.2
 click==8.1.7
 Flask==3.0.3
 greenlet==3.0.3
+gunicorn==22.0.0
 idna==3.7
 iniconfig==2.0.0
 itsdangerous==2.2.0
@@ -21,5 +22,4 @@ soupsieve==2.5
 typing_extensions==4.12.2
 tzlocal==5.2
 urllib3==2.2.1
-waitress==3.0.0
 Werkzeug==3.0.3

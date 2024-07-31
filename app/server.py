@@ -1,31 +1,38 @@
 import logging
 
-import fuel
 import urllib3
 from apscheduler.schedulers.background import BackgroundScheduler
-from cache import fuels_cache_categorised
+from cache import cache_fuels, get_fuels
 from flask import Flask, render_template
-from waitress import serve
+from pytz import utc
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Disable insecure request warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 app = Flask(__name__)
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=fuel.cache_fuels, trigger="interval", hours=1)
-scheduler.start()
+scheduler = BackgroundScheduler(timezone=utc)
+scheduler.add_job(func=cache_fuels, trigger="interval", hours=1)
 
 
 @app.route("/")
 def index():
-    return render_template("index.html", fuels=fuels_cache_categorised)
+    return render_template("index.html", fuels=get_fuels())
 
 
-if __name__ == "__main__":
+def start_scheduler():
     try:
-        fuel.cache_fuels()
-        serve(app, host="0.0.0.0", port="8080")
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
+        scheduler.start()
+        logger.info("Scheduler started successfully")
+    except Exception as e:
+        logger.error(f"Error starting scheduler: {e}")
+
+
+def stop_scheduler():
+    scheduler.shutdown()
+    logger.info("Scheduler shut down")

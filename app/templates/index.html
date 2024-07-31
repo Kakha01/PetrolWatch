@@ -15,14 +15,30 @@
       src="{{ url_for('static', filename='src/index.js') }}"
       async
     ></script>
-    <title>Petrol Control</title>
+    <title>Petrol Watch</title>
+    <meta
+      name="description"
+      content="Petrol Watch - Compare fuel prices across different companies in Georgia"
+    />
   </head>
   <body>
-    <h1 class="max-w-screen-xl mx-auto font-semibold text-2xl text-center py-4">
-      petrol-watch
-    </h1>
+    <header
+      class="flex px-4 py-3 justify-between max-w-screen-xl mx-auto items-center"
+    >
+      <h1 class="font-semibold text-xl text-enter">petrol-watch</h1>
+      <a href="https://github.com/Kakha01" class="flex gap-2 items-center">
+        <img
+          src="{{ url_for('static', filename='src/logos/Github.png') }}"
+          alt="github logo"
+          height="24"
+          width="24"
+          class="h-5 w-5"
+        />
+        <span>Kakha01</span>
+      </a>
+    </header>
     <section
-      class="grid sm:grid-cols-2 auto-rows-fr grid-cols-1 md:grid-cols-3 lg:grid-cols-4 p-4 gap-4 max-w-screen-xl mx-auto"
+      class="grid sm:grid-cols-2 auto-rows-fr grid-cols-1 md:grid-cols-3 lg:grid-cols-4 p-4 gap-4 max-w-screen-xl mx-auto pb-16"
     >
       {% for company_name, fuels in fuels.items() %}
       <div
