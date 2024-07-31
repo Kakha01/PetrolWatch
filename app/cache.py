@@ -1,30 +1,24 @@
+import logging
+from typing import Dict, List
+
+from fuel import fuel_sources, get_all_fuels
 from interfaces import Fuel
 
-fuels_cache: list[Fuel] = []
+logger = logging.getLogger(__name__)
 
-fuels_cache_categorised: dict[str, list[Fuel]] = {}
-
-
-def categorize_fuels(fuels: list[Fuel]):
-    fuels_categorised: dict[str, list[Fuel]] = {}
-
-    for fuel in fuels:
-        if fuel["company_name"] in fuels_categorised:
-            fuels_categorised[fuel["company_name"]].append(fuel)
-        else:
-            fuels_categorised[fuel["company_name"]] = [fuel]
-
-    fuels_cache_categorised.clear()
-    fuels_cache_categorised.update(fuels_categorised)
+fuels_cache: Dict[str, List[Fuel]] = {}
 
 
-def add_to_cache(fuel: Fuel):
-    fuels_cache.append(fuel)
+def get_fuels() -> Dict[str, List[Fuel]]:
+    return fuels_cache
 
 
-def extend_cache(fuels: list[Fuel]):
-    fuels_cache.extend(fuels)
-
-
-def clear_fuel_cache():
-    fuels_cache.clear()
+def cache_fuels():
+    logger.info("Starting to cache fuels")
+    try:
+        fuels = get_all_fuels(fuel_sources())
+        fuels_cache.clear()
+        fuels_cache.update(fuels)
+        logger.info(f"Successfully cached {len(fuels)} fuels")
+    except Exception as e:
+        logger.error(f"Error occurred while caching fuels: {str(e)}", exc_info=True)

@@ -1,9 +1,6 @@
-import logging
-
 import requests
 import utils
 from bs4 import BeautifulSoup, NavigableString
-from cache import clear_fuel_cache, extend_cache, categorize_fuels
 from interfaces import Fuel, FuelSource
 
 HEADERS = {
@@ -15,39 +12,49 @@ HEADERS = {
 def fuel_sources() -> list[FuelSource]:
     return [
         FuelSource(
+            company_name="Gulf",
             url="https://gulf.ge/en/",
             data_type="html",
             extractor=extract_gulf_fuel_info,
         ),
         FuelSource(
+            company_name="Socar",
             url="https://www.sgp.ge/en/",
             data_type="html",
             extractor=extract_socar_fuel_info,
         ),
         FuelSource(
+            company_name="Wissol",
             url="https://wissol.ge/adminarea/api/ajaxapi/get_fuel_prices?lang=eng",
             data_type="json",
             extractor=extract_wissol_fuel_info,
         ),
         FuelSource(
+            company_name="Rompetrol",
             url="https://www.rompetrol.ge/en/",
             data_type="html",
             extractor=extract_rompetrol_fuel_info,
         ),
         FuelSource(
-            url="http://lukoil.ge", data_type="html", extractor=extract_lukoil_fuel_info
+            company_name="Lukoil",
+            url="http://lukoil.ge",
+            data_type="html",
+            extractor=extract_lukoil_fuel_info,
         ),
         FuelSource(
+            company_name="Portal",
             url="https://portal.com.ge/english/home",
             data_type="html",
             extractor=extract_portal_fuel_info,
         ),
         FuelSource(
+            company_name="Optima",
             url="http://optimapetrol.ge/en",
             data_type="html",
             extractor=extract_optima_fuel_info,
         ),
         FuelSource(
+            company_name="Connect",
             url="https://connect-database.vercel.app/api/data",
             data_type="json",
             extractor=extract_connect_fuel_info,
@@ -55,14 +62,14 @@ def fuel_sources() -> list[FuelSource]:
     ]
 
 
-def get_all_fuels(fuel_sources: list[FuelSource]) -> list[Fuel]:
+def get_all_fuels(fuel_sources: list[FuelSource]) -> dict[str, list[Fuel]]:
     session = requests.Session()
-    all_fuels: list[Fuel] = []
+    all_fuels: dict[str, list[Fuel]] = {}
 
     for source in fuel_sources:
         fuels = get_fuels(source, session)
         if fuels:
-            all_fuels.extend(fuels)
+            all_fuels[source.company_name] = fuels
 
     return all_fuels
 
@@ -97,17 +104,6 @@ def fetch_json(url: str, s: requests.Session):
         print(e)
 
 
-def cache_fuels():
-    logging.info("Getting all fuels")
-    fuels = get_all_fuels(fuel_sources())
-
-    clear_fuel_cache()
-    logging.info("Cleared Cache")
-    extend_cache(fuels)
-    logging.info("Categorised Fuels")
-    categorize_fuels(fuels)
-
-
 def extract_socar_fuel_info(soup: BeautifulSoup):
     # Target:
     # <li data-percent="74.4">
@@ -128,10 +124,9 @@ def extract_socar_fuel_info(soup: BeautifulSoup):
         if fuel_type:
             fuels.append(
                 {
-                    "company_name": "Socar",
-                    "fuel_name": fuel_name,
-                    "fuel_price": fuel_price,
-                    "fuel_type": fuel_type,
+                    "name": fuel_name,
+                    "price": fuel_price,
+                    "type": fuel_type,
                 }
             )
 
@@ -165,10 +160,9 @@ def extract_lukoil_fuel_info(soup: BeautifulSoup):
         if fuel_type and int(float(fuel_price)) > 0:
             fuels.append(
                 {
-                    "company_name": "Lukoil",
-                    "fuel_name": fuel_name,
-                    "fuel_price": fuel_price,
-                    "fuel_type": fuel_type,
+                    "name": fuel_name,
+                    "price": fuel_price,
+                    "type": fuel_type,
                 }
             )
 
@@ -203,10 +197,9 @@ def extract_rompetrol_fuel_info(soup: BeautifulSoup):
             if fuel_type:
                 fuels.append(
                     {
-                        "company_name": "Rompetrol",
-                        "fuel_name": fuel_name,
-                        "fuel_price": fuel_price,
-                        "fuel_type": fuel_type,
+                        "name": fuel_name,
+                        "price": fuel_price,
+                        "type": fuel_type,
                     }
                 )
 
@@ -231,10 +224,9 @@ def extract_gulf_fuel_info(soup: BeautifulSoup):
         if fuel_type:
             fuels.append(
                 {
-                    "company_name": "Gulf",
-                    "fuel_name": fuel_name,
-                    "fuel_price": fuel_price,
-                    "fuel_type": fuel_type,
+                    "name": fuel_name,
+                    "price": fuel_price,
+                    "type": fuel_type,
                 }
             )
 
@@ -262,10 +254,9 @@ def extract_optima_fuel_info(soup: BeautifulSoup):
         if fuel_type:
             fuels.append(
                 {
-                    "company_name": "Optima",
-                    "fuel_name": fuel_name,
-                    "fuel_price": fuel_price,
-                    "fuel_type": fuel_type,
+                    "name": fuel_name,
+                    "price": fuel_price,
+                    "type": fuel_type,
                 }
             )
 
@@ -305,10 +296,9 @@ def extract_portal_fuel_info(soup: BeautifulSoup):
         if fuel_type:
             fuels.append(
                 {
-                    "company_name": "Portal",
-                    "fuel_name": utils.capitalize_words(fuel_name),
-                    "fuel_price": fuel_price,
-                    "fuel_type": fuel_type,
+                    "name": utils.capitalize_words(fuel_name),
+                    "price": fuel_price,
+                    "type": fuel_type,
                 }
             )
 
@@ -319,8 +309,8 @@ def extract_wissol_fuel_info(json: list[dict[str, str]]):
     # Target:
     # [
     #   {
-    #     "fuel_name": "EKO SUPER",
-    #     "fuel_price": "3.75",
+    #     "name": "EKO SUPER",
+    #     "price": "3.75",
     #   },
     # ]
 
@@ -334,10 +324,9 @@ def extract_wissol_fuel_info(json: list[dict[str, str]]):
         if fuel_type:
             fuels.append(
                 {
-                    "company_name": "Wissol",
-                    "fuel_name": utils.capitalize_words(fuel_name),
-                    "fuel_price": fuel_price,
-                    "fuel_type": fuel_type,
+                    "name": utils.capitalize_words(fuel_name),
+                    "price": fuel_price,
+                    "type": fuel_type,
                 }
             )
 
@@ -367,10 +356,9 @@ def extract_connect_fuel_info(json: list[dict[str, str]]):
         if fuel_type:
             fuels.append(
                 {
-                    "company_name": "Connect",
-                    "fuel_name": fuel_name,
-                    "fuel_price": fuel_price,
-                    "fuel_type": fuel_type,
+                    "name": fuel_name,
+                    "price": fuel_price,
+                    "type": fuel_type,
                 }
             )
 
