@@ -1,14 +1,14 @@
-from typing import TypedDict, NamedTuple, Callable, Literal
+from typing import TypedDict, NamedTuple, Callable, Literal, Any
 
 
 class Fuel(TypedDict):
-    company_name: str
-    fuel_name: str
-    fuel_price: str
-    fuel_type: str
+    name: str
+    price: str
+    type: str
 
 
 class FuelSource(NamedTuple):
     url: str
+    company_name: str
     data_type: Literal["html"] | Literal["json"]
-    extractor: Callable
+    extractor: Callable[[Any], list[Fuel]]
