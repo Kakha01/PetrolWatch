@@ -19,7 +19,7 @@
   </head>
   <body>
     <h1 class="max-w-screen-xl mx-auto font-semibold text-2xl text-center py-4">
-      PetrolWatch
+      petrol-watch
     </h1>
     <section
       class="grid sm:grid-cols-2 auto-rows-fr grid-cols-1 md:grid-cols-3 lg:grid-cols-4 p-4 gap-4 max-w-screen-xl mx-auto"
@@ -49,21 +49,21 @@
             >View Locations &nearr;</a
           >
         </div>
-        <div class="text-slate-700 divide-y divide-slate-200 py-0.5">
+        <ul class="text-slate-700 divide-y divide-slate-200 py-0.5">
           {% for fuel in fuels %}
-          <div class="flex py-1 px-2.5 justify-between">
-            <h3>{{ fuel.fuel_name }}</h3>
-            <p class="w-[48px] flex justify-between">
-              <span>{{ fuel.fuel_price }}</span><span>₾</span>
-            </p>
-          </div>
+          <li class="flex py-1 px-2.5 justify-between">
+            <span>{{ fuel.name }}</span>
+            <span class="w-[48px] flex justify-between">
+              <span>{{ fuel.price }}</span><span>₾</span>
+            </span>
+          </li>
           {% endfor %} {% for _ in range(6 - fuels | length) %}
-          <div class="flex py-1 px-2.5 justify-between">
-            <h3>-</h3>
-            <p class="w-[48px] text-center">-</p>
-          </div>
+          <li class="flex py-1 px-2.5 justify-between">
+            <span>-</span>
+            <span class="w-[48px] text-center">-</span>
+          </li>
           {% endfor %}
-        </div>
+        </ul>
       </div>
       {% endfor %}
     </section>
